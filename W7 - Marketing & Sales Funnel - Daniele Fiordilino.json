@@ -1,0 +1,425 @@
+{
+  "name": "W7 - Marketing & Sales Funnel - Daniele Fiordilino",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 23,
+              "triggerAtMinute": 59
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -208,
+        208
+      ],
+      "id": "bb125470-b31e-498a-813e-08ca851d688c",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {
+          "query": "=created>={{ $today }}"
+        }
+      },
+      "type": "n8n-nodes-base.zendesk",
+      "typeVersion": 1,
+      "position": [
+        16,
+        112
+      ],
+      "id": "4d82122c-714f-48b3-8263-27d1ac97f1da",
+      "name": "Get many tickets",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "folderId": "1yCGbn115xKTuWns8S6bXtDy1iZyCQht5",
+        "title": "=Report {{ $json.timestamp.split('T')[0] }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        528,
+        304
+      ],
+      "id": "21615999-fcbc-439d-8baf-37a6794bd304",
+      "name": "Create a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "jXy8nfkZFwpWbfGV",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "daniele22fiordilino+responsabile@hotmail.it",
+        "subject": "Report Zendesk giornaliero",
+        "emailType": "text",
+        "message": "Ecco il report relativo ai ticket Zendesk di oggi.",
+        "options": {
+          "appendAttribution": true,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1488,
+        208
+      ],
+      "id": "72998746-a6af-4032-bd2c-6433a99bded1",
+      "name": "Send a message",
+      "webhookId": "3e80f917-324d-478a-8ec9-9033063a682d",
+      "retryOnFail": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bn2PrEsQWHI2g4na",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        816,
+        208
+      ],
+      "id": "a5a351d0-730c-4f58-b1ff-558498b1d18e",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "Tickets",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        240,
+        112
+      ],
+      "id": "1eab9874-82c6-4544-abe2-88c14cccd2fe",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.documentId }}",
+          "mode": "id"
+        },
+        "options": {
+          "fileName": "={{ $('Merge').item.json.name }}.docx"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1264,
+        208
+      ],
+      "id": "8fbea13b-7414-4aac-a796-441833102463",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "yFtMWGIpUi0iSkyM",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Input: {{ JSON.stringify($json.Tickets) }}."
+            }
+          ]
+        },
+        "options": {
+          "systemMessage": "Sei un analista di service desk specializzato. Il tuo compito è valutare l'andamento del supporto tecnico basandoti esclusivamente sull'array di oggetti JSON dei ticket Zendesk fornito in input.\n\n### Istruzioni per la Valutazione e il Report\n\n1.  **Analisi Quantitativa:** Calcola e riporta i dati chiave (dove possibile):\n    * Numero totale di ticket ricevuti nel periodo.\n    * Tassi di risoluzione (se lo stato 'Risolto' è presente).\n    * Identifica le 3 categorie o argomenti più ricorrenti (ad esempio, 'Problemi di Login', 'Richieste di Funzionalità', 'Bug').\n2.  **Analisi Qualitativa e Tendenze:**\n    * Riassumi il **sentiment generale** o il livello di urgenza dei ticket.\n    * Identifica eventuali **anomalie** o picchi di volume in un'area specifica.\n    * Valuta l'**andamento del carico di lavoro**: sta aumentando, diminuendo o è stabile?\n3.  **Sintesi e Raccomandazioni:**\n    * Crea un **riassunto generale** conciso, pensato per un manager, che valuti l'andamento complessivo del servizio nel periodo.\n    * Suggerisci 2-3 **aree di miglioramento** o punti che richiedono maggiore attenzione del team (basati sugli argomenti più ricorrenti o sulle tendenze negative).\n\n### Formato di Output Obbligatorio\n\nIl tuo output deve essere un **report testuale (un riassunto generale) formattato con Markdown**, senza alcuna introduzione o conclusione conversazionale (come \"Ecco il report...\"). Il testo deve essere pronto per essere inserito direttamente in un documento.\n\n**Utilizza le seguenti sezioni obbligatorie nel tuo report:**\nReport Analisi Andamento Ticket - [Inserisci Data o Periodo]\n📊 Riepilogo Statistico del Periodo\nTotale Ticket: [Numero]\n\nTasso di Risoluzione: [Percentuale, se calcolabile]\n\nTop 3 Argomenti:\n\n[Argomento 1] ([Numero/Percentuale])\n\n[Argomento 2] ([Numero/Percentuale])\n\n[Argomento 3] ([Numero/Percentuale])\n\n📈 Valutazione delle Tendenze\n[Testo di 2-3 frasi che descrive l'andamento del carico di lavoro e il sentiment.]\n\n⭐ Raccomandazioni e Prossimi Passi\n[Elenco puntato con 2-3 suggerimenti concreti per il team.]",
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        464,
+        112
+      ],
+      "id": "904c8033-cefa-435f-a400-907e58f5823d",
+      "name": "Gemini",
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "M5znk5f1CeiRvNeL",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{ $json.content.parts[0].text }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        208
+      ],
+      "id": "d13d5cdf-8dda-403e-aae2-5999e4ef9ea2",
+      "name": "Scrivi sul documento",
+      "retryOnFail": false,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "jXy8nfkZFwpWbfGV",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Prende tutti i ticket creati nel giorno di esecuzione del flusso.",
+        "height": 256,
+        "width": 166
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        16
+      ],
+      "id": "a60cc1fc-7065-4cac-b8aa-4b52ba0900ca",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Aggrega i risultati in modo da mandare in output un solo oggetto da far analizzare all'IA.",
+        "height": 224,
+        "width": 192,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        192,
+        16
+      ],
+      "id": "18d46b6f-1de7-4d77-9570-732e845676ef",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Scarica il documento appena scritto per poterlo inviare via mail.",
+        "height": 256,
+        "width": 160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        112
+      ],
+      "id": "97de12e4-d81b-433d-9b26-f8bf981d4357",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Invia la mail con il documento allegato, all'alias \"responsabile\".",
+        "height": 256,
+        "width": 160,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        112
+      ],
+      "id": "378727ea-cae8-4005-b081-b933b5f6dbff",
+      "name": "Sticky Note3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many tickets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many tickets": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a document": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Scrivi sul documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrivi sul documento": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "df373a19-724b-4699-84ff-b8b91b891ad0",
+  "meta": {
+    "instanceId": "285e6b7035d57255323414f2adfae0530b9d9fde4f34f40ef0775256340f9783"
+  },
+  "id": "Lzgv7QFW0S7oVOvL",
+  "tags": [
+    {
+      "updatedAt": "2026-04-02T02:22:20.430Z",
+      "createdAt": "2026-04-02T02:22:20.430Z",
+      "id": "4cDUE6nfNbvVML0X",
+      "name": "Gmail"
+    },
+    {
+      "updatedAt": "2026-04-02T02:24:19.040Z",
+      "createdAt": "2026-04-02T02:24:19.040Z",
+      "id": "ExTLzdRyt6LJs0cw",
+      "name": "Google Drive"
+    },
+    {
+      "updatedAt": "2026-04-02T03:02:46.710Z",
+      "createdAt": "2026-04-02T03:02:46.710Z",
+      "id": "oR1knSWoKLbEg04u",
+      "name": "IA"
+    },
+    {
+      "updatedAt": "2026-04-03T22:02:30.420Z",
+      "createdAt": "2026-04-03T22:02:30.420Z",
+      "id": "vEzaPJhvxUWx7lot",
+      "name": "Google Docs"
+    },
+    {
+      "updatedAt": "2026-04-03T18:19:18.434Z",
+      "createdAt": "2026-04-03T18:19:18.434Z",
+      "id": "zat83TUyFJDI96Br",
+      "name": "Zendesk"
+    }
+  ]
+}

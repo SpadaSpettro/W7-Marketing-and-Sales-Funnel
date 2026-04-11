@@ -1,0 +1,557 @@
+{
+  "name": "W7 esercizio - Marketing & Sales Funnel - Daniele Fiordilino",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        80,
+        224
+      ],
+      "id": "508bba33-e51d-4476-ac9d-d0a1794357bd",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "M5znk5f1CeiRvNeL",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "description": "=Il contatto ha risposto al tuo invito.",
+        "jsonParameters": true,
+        "additionalFieldsJson": "={\n  \"requester\": {\n    \"email\": \"{{ $json.From.split('<')[1].slice(0, -1) }}\",\n    \"name\": \"{{ $json.From.split('<')[0].trimEnd() }}\"\n  },\n  \"status\": \"new\",\n  \"subject\": \"Risposta invito\"\n}"
+      },
+      "type": "n8n-nodes-base.zendesk",
+      "typeVersion": 1,
+      "position": [
+        0,
+        432
+      ],
+      "id": "82eb79ac-aae4-4768-a566-4c7f2d9ecced",
+      "name": "Create a ticket",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09FLAWBE2H",
+          "mode": "list",
+          "cachedResultName": "n8n"
+        },
+        "text": "=Il contatto {{ $json.From.split('<')[0].trimEnd() }} ({{ $json.From.split('<')[1].slice(0, -1) }}) ha risposto al tuo invito. È stato aperto un <https://{{ ($json[\"url\"]).match(/https:\\/\\/(.*?)\\.zendesk/)[1] }}.zendesk.com/agent/tickets/{{ $json['id Ticket'] }}|ticket> su Zendesk.\n",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        512
+      ],
+      "id": "dded9c5e-a848-4510-87c1-7c38bee43160",
+      "name": "Send a message",
+      "webhookId": "980d8079-119d-4066-9df5-939005daf601",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "maxTries": 4,
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "oe9P2sr9oxB2nqo5",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.data.data.verifiedEmail }}",
+        "subject": "Grazie per aver partecipato al sondaggio!",
+        "emailType": "text",
+        "message": "La ringraziamo per aver partecipato al nostro sondaggio. Abbiamo gradito molto l'interesse da Lei mostrato nei confronti del nostro business aziendale e confidiamo che possa ispirare molte altre persone come Lei.\nDistinti saluti\nn8n",
+        "options": {
+          "appendAttribution": true,
+          "senderName": "n8n"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        352,
+        208
+      ],
+      "id": "b36151d2-d7c1-4f54-a2da-d4f999f98242",
+      "name": "Mail di cortesia",
+      "webhookId": "3295d261-dc9d-45fd-9e72-2b7ec45d92f8",
+      "retryOnFail": false,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bn2PrEsQWHI2g4na",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.verifiedEmail }}",
+        "subject": "Sondaggio completato!",
+        "message": "=<p>Abbiamo apprezzato particolarmente le risposte fornite e il Suo interesse verso il nostro business aziendale.<br>In virtù di ciò e constatando il valore di una persona come Lei, vogliamo personalmente invitarLa a prendere attivamente parte al successo di un grande business.<br>Non vediamo l'ora di collaborare con Lei!<br>Insieme, moltiplichiamo i processi.<br>n8n</p>\n<br>\n\n<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n  <tr>\n    <td style=\"padding: 10px 0 10px 0;\">\n      <a href=\"mailto:{{ $json['Indirizzo di risposta'] }}?subject=risposta%20invito\" target=\"_blank\" style=\"text-decoration: none;\">\n        <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\n          <tr>\n            <td align=\"center\" bgcolor=\"#ff6d5a\" style=\"border-radius: 5px; padding: 12px 18px; font-family: Arial, sans-serif; font-size: 14px; font-weight: bold;\">\n              <span style=\"color: #ffffff; line-height: 100%;\">\n                Prendi parte al successo\n              </span>\n            </td>\n          </tr>\n        </table>\n      </a>\n    </td>\n  </tr>\n</table>",
+        "options": {
+          "senderName": "n8n"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        576,
+        16
+      ],
+      "id": "55f14b1e-0932-4fd3-a313-3aa5f6704db1",
+      "name": "Mail spinta",
+      "webhookId": "e16bcb53-853c-4179-a69a-6d063642adb9",
+      "notesInFlow": false,
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bn2PrEsQWHI2g4na",
+          "name": "Gmail account"
+        }
+      },
+      "notes": "Impostare nel messaggio l'indirizzo email a cui si desidera ricevere la risposta."
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "f29771e2-96c4-4ae4-bd7e-5689b34ac947",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -224,
+        112
+      ],
+      "id": "707ae8c8-2fd7-4e66-ad06-eb73c8ca0c94",
+      "name": "Webhook",
+      "webhookId": "f29771e2-96c4-4ae4-bd7e-5689b34ac947",
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3856
+    },
+    {
+      "parameters": {
+        "inputText": "={{ JSON.stringify($json.body.data.data) }}",
+        "options": {
+          "categories": "Interessante, Poco interessante",
+          "systemPromptTemplate": "You are an expert lead qualification and highly intelligent and accurate sentiment analyzer. Analyze the sentiment of the provided text and the stated budget, to determine the overall **quality and relevance** of the lead. Categorize it into one of the following: {categories}. If the budget is not specified, always categorize the lead into the category \"Poco interessante\". Use the provided formatting instructions. Only output the JSON.\n\n**Input Data:**\n* **Text:** A text field describing the contact's general information; can include the numerical budget value associated with the lead.\n\n**Budget Relevance Guidelines:**\n* **Low Interest:** €1 - €1,679\n* **High Interest:** €1,680 - €10,000\n* **Extremely High Interest/Highly Relevant:** €10,001+",
+          "enableAutoFixing": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.sentimentAnalysis",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "61f67526-e973-4593-8899-92f46231dbd4",
+      "name": "Analizza contatto"
+    },
+    {
+      "parameters": {
+        "content": "Il nodo webhook riceve la risposta al sondaggio.",
+        "height": 208,
+        "width": 160,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        32
+      ],
+      "id": "20965f0d-f449-4c0f-b869-db675c908cbe",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "q": "subject:risposta invito",
+          "readStatus": "unread"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        512
+      ],
+      "id": "3598a925-6159-4f80-903d-33f320ede2f0",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bn2PrEsQWHI2g4na",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        448,
+        512
+      ],
+      "id": "e9b86cdd-8ed3-4b51-939e-e44aedef68cf",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "61262dff-b6c0-48f7-9b95-9b985a7e1e9e",
+              "name": "id Ticket",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "include": "selected",
+        "includeFields": "url",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        432
+      ],
+      "id": "1a7f767d-25bf-4d0e-827e-5596860231af",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a3432a38-141d-4adb-9fd6-d3c525da82da",
+              "name": "Indirizzo di risposta",
+              "value": "danielefiordilino54@gmail.com",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "include": "selected",
+        "includeFields": "body.data.data.verifiedEmail",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        352,
+        16
+      ],
+      "id": "37417eb6-55b0-4abd-9bb4-7e00ad8e05e1",
+      "name": "Imposta indirizzo di risposta"
+    }
+  ],
+  "pinData": {
+    "Gmail Trigger": [
+      {
+        "json": {
+          "id": "19a6e3a3aa75bf2e",
+          "threadId": "19a6e3a3aa75bf2e",
+          "snippet": "",
+          "payload": {
+            "mimeType": "multipart/related"
+          },
+          "sizeEstimate": 65067,
+          "historyId": "460023",
+          "internalDate": "1762785898000",
+          "labels": [
+            {
+              "id": "INBOX",
+              "name": "INBOX"
+            },
+            {
+              "id": "UNREAD",
+              "name": "UNREAD"
+            }
+          ],
+          "From": "SpadaSpettro _ <SpadaSpettro@outlook.com>",
+          "To": "\"danielefiordilino54@gmail.com\" <danielefiordilino54@gmail.com>",
+          "Subject": "patat 2"
+        }
+      }
+    ],
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "accountdan.app.n8n.cloud",
+            "user-agent": "node",
+            "content-length": "1405",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "*",
+            "baggage": "sentry-environment=production,sentry-release=4.8.7,sentry-public_key=0b26e7660971b3029560ebc0d990e316,sentry-trace_id=4e8a1aa75f3449e9bb418dce73047798,sentry-org_id=4510301003317248,sentry-sampled=false,sentry-sample_rand=0.6391090377068936,sentry-sample_rate=0",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "18.199.133.79",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "DE",
+            "cf-ray": "9e69ad118895906a-FRA",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "sec-fetch-mode": "cors",
+            "sentry-trace": "3e4709799bed4b83fad262beb86477b2-704601b5ede144e6",
+            "traceparent": "00-3e4709799bed4b83fad262beb86477b2-9aa2360e2c3606b6-00",
+            "webhook-id": "019d5451-66aa-77e9-be1a-4954edb9cc35",
+            "webhook-timestamp": "1775236114",
+            "x-forwarded-for": "18.199.133.79, 172.70.247.149",
+            "x-forwarded-host": "accountdan.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-30-69cbd4b649-jwcjz",
+            "x-is-trusted": "yes",
+            "x-real-ip": "18.199.133.79"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "webhookId": "cmhdjepua027bad01ylvwlg70",
+            "event": "responseFinished",
+            "data": {
+              "id": "cmnj5q4btg09rog01hmdbgvtf",
+              "createdAt": "2026-04-03T17:07:57.930Z",
+              "updatedAt": "2026-04-03T17:08:34.033Z",
+              "surveyId": "obwtqonj9goxavuqdh4qvkm8",
+              "displayId": "cmnj5pibafxzcru016wn142tl",
+              "contact": null,
+              "contactAttributes": null,
+              "finished": true,
+              "endingId": null,
+              "data": {
+                "Paese": "Italia",
+                "Budget": "1501€ - 5000€",
+                "Business": "Sto provando il flusso di lavoro di n8n.",
+                "Informazioni": [
+                  "Daniele",
+                  "Fiordilino",
+                  "",
+                  "",
+                  ""
+                ],
+                "verifiedEmail": "spadaspettro@outlook.com"
+              },
+              "variables": {},
+              "ttc": {
+                "Paese": 28579.40000000037,
+                "Budget": 21827,
+                "_total": 94924.80000000075,
+                "Business": 20210.19999999925,
+                "Informazioni": 24308.20000000112
+              },
+              "tags": [],
+              "meta": {
+                "url": "https://app.formbricks.com/s/obwtqonj9goxavuqdh4qvkm8?verify=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImUzOWM4MmRkNWI0MjI0Zjc2YTYyNjExNTFjMmM4MGVhOmNiZTU4YzE3ZTM5ZjMwYTc0YTcxOWI0MTc2MWVhNmZjZjQ3NjkyZjliMDI3ODhkZTo0ZmZmN2Y1MDY4YjI5NTExYmU2NmNlNjMyMDZkYWIyYiIsInN1cnZleUlkIjoib2J3dHFvbmo5Z294YXZ1cWRoNHF2a204IiwiaWF0IjoxNzc1MjM2MDEyfQ.CMQYGYIjz3gZNk02cyjxvBlg-C4Zy_8y2bcX5oTaKXg",
+                "userAgent": {
+                  "browser": "Edge",
+                  "os": "Windows",
+                  "device": "desktop"
+                },
+                "country": "IT",
+                "ipAddress": "95.234.107.62"
+              },
+              "singleUseId": null,
+              "language": "it",
+              "survey": {
+                "title": "Registrazione contatti",
+                "type": "link",
+                "status": "inProgress",
+                "createdAt": "2026-04-03T15:07:01.462Z",
+                "updatedAt": "2026-04-03T16:41:57.018Z"
+              }
+            }
+          },
+          "webhookUrl": "https://accountdan.app.n8n.cloud/webhook-test/f29771e2-96c4-4ae4-bd7e-5689b34ac947",
+          "executionMode": "test"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analizza contatto",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Analizza contatto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analizza contatto": {
+      "main": [
+        [
+          {
+            "node": "Imposta indirizzo di risposta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mail di cortesia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a ticket": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Create a ticket",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imposta indirizzo di risposta": {
+      "main": [
+        [
+          {
+            "node": "Mail spinta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "62edfb8c-8b24-4d86-981f-2885c842039a",
+  "meta": {
+    "instanceId": "285e6b7035d57255323414f2adfae0530b9d9fde4f34f40ef0775256340f9783"
+  },
+  "id": "zcmFxU0bKS3Z511Z",
+  "tags": [
+    {
+      "updatedAt": "2026-04-02T02:22:20.430Z",
+      "createdAt": "2026-04-02T02:22:20.430Z",
+      "id": "4cDUE6nfNbvVML0X",
+      "name": "Gmail"
+    },
+    {
+      "updatedAt": "2026-04-03T18:18:57.179Z",
+      "createdAt": "2026-04-03T18:18:57.179Z",
+      "id": "7yAIDtU7nxjDJxeG",
+      "name": "Webhook"
+    },
+    {
+      "updatedAt": "2026-04-02T02:24:23.981Z",
+      "createdAt": "2026-04-02T02:24:23.981Z",
+      "id": "FFlCI8L38YjiyRSk",
+      "name": "Slack"
+    },
+    {
+      "updatedAt": "2026-04-02T03:02:46.710Z",
+      "createdAt": "2026-04-02T03:02:46.710Z",
+      "id": "oR1knSWoKLbEg04u",
+      "name": "IA"
+    },
+    {
+      "updatedAt": "2026-04-03T18:19:18.434Z",
+      "createdAt": "2026-04-03T18:19:18.434Z",
+      "id": "zat83TUyFJDI96Br",
+      "name": "Zendesk"
+    }
+  ]
+}
