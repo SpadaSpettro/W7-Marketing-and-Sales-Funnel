@@ -15,4 +15,4 @@ A workflow that automatically records contact information via FormBricks survey 
 
 ###### Tools used:
 
-**n8n, FormBricks, Gmail, IA, Zendesk, Slack, Google Docs.**
+**n8n, FormBricks, Gmail, AI, Zendesk, Slack, Google Docs.**
