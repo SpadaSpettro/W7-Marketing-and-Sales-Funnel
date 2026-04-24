@@ -1,6 +1,6 @@
 # W7 - Marketing \& Sales Funnel
 
-A workflow that automatically records contact information via FormBricks survey and evaluates their interest: if they're not very interesting, it sends a courtesy email; if they're interesting enough, it sends a follow-up email. After receiving a response, it opens a ticket in Zendesk and notifies the contact via Slack. It runs a daily ticket report and saves it to a Google Doc, which is then sent to the company manager.
+A workflow that automatically records contact information via **FormBricks** survey and evaluates their interest: if they're not very interesting, it sends a courtesy email; if they're interesting enough, it sends a follow-up email. After receiving a response, it opens a ticket in **Zendesk** and notifies the contact via **Slack**. It runs a daily ticket report and saves it to a **Google Doc**, which is then sent to the company manager.
 
 
 
